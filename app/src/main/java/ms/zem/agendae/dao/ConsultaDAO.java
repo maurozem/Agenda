@@ -113,6 +113,7 @@ public class ConsultaDAO {
         call.enqueue(new Callback<List<Consulta>>() {
             @Override
             public void onResponse(Call<List<Consulta>> call, Response<List<Consulta>> response) {
+                Log.i(TAG, "response: " + response.toString());
                 if (response.isSuccessful()) {
                     if(executar != null){
                         executar.sucesso(response.body());

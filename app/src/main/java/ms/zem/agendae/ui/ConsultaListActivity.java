@@ -48,10 +48,6 @@ public class ConsultaListActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent it = new Intent(ConsultaListActivity.this, ConsultaActivity.class);
                 startActivityForResult(it, INCLUIR);
-                /*
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                        */
             }
         });
 
@@ -62,10 +58,14 @@ public class ConsultaListActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         dao = DAO.getInstance();
-        buscarConsultas();
+        Preferencia preferencia = new Preferencia(getApplicationContext());
+        if(preferencia.usuarioLogado()){
+            buscarConsultas();
+        }
     }
 
     private void buscarConsultas() {
+
         dao.getConsultaDAO().getConsultas(new Executar() {
             @Override
             public void sucesso(Object object) {

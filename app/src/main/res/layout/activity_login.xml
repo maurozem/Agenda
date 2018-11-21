@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:padding="32dp"
     android:gravity="center"
-    tools:context=".activity.MainActivity">
+    tools:context=".ui.MainActivity">
 
     <TextView
         android:layout_width="match_parent"
@@ -22,7 +22,7 @@
         android:id="@+id/til_usuario"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp" >
+        android:layout_marginTop="8dp" >
 
         <android.support.v7.widget.AppCompatEditText
             android:id="@+id/edtUsuario"
@@ -54,10 +54,12 @@
     </android.support.design.widget.TextInputLayout>
 
     <android.support.v7.widget.AppCompatButton
+        android:id="@+id/btnLogar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="32dp"
-        android:id="@+id/btnLogar"
-        android:text="Logar"/>
+        android:background="@color/primary_dark"
+        android:text="Logar"
+        android:textColor="@android:color/white" />
 
 </LinearLayout>

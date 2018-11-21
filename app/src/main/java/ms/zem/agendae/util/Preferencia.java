@@ -26,10 +26,12 @@ public class Preferencia {
         return usuario;
     }
 
-    public void setUsuario(Usuario usuario){
+    public void setUsuario(Usuario user){
         SharedPreferences pref =
                 context.getSharedPreferences("UsuarioLogado", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
+
+        usuario = user;
 
         if(usuario == null){
             editor.clear();

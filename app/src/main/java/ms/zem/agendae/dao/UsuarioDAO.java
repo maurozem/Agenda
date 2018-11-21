@@ -26,7 +26,7 @@ public class UsuarioDAO {
                 if (response.isSuccessful()) {
                     if (!response.body().isEmpty()) {
                         if(executar != null){
-                            executar.sucesso(response.body().get(0));
+                            executar.sucesso(response.body());
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 package ms.zem.agendae.ui;
 
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
@@ -36,6 +37,7 @@ public class ConsultaActivity extends AppCompatActivity {
     private Consulta consulta;
     private Especialidade especialidade;
     private Disponibilidade disponibilidade;
+    private Usuario paciente;
 
     private boolean expertMode;
 
@@ -45,31 +47,18 @@ public class ConsultaActivity extends AppCompatActivity {
         setContentView(R.layout.activity_consulta);
 
         expertMode = !Preferencia.getUsuario().getTipo().equals("P");
-
         dao = DAO.getInstance();
         consulta = new Consulta();
-
-
 
         edtPaciente = findViewById(R.id.edtPaciente);
         edtPaciente.setKeyListener(null);
         edtEspecialidade = findViewById(R.id.edtEspecialidade);
         edtEspecialidade.setKeyListener(null);
-        edtEspecialidade.setEnabled(false);
         edtData = findViewById(R.id.edtData);
         edtData.setKeyListener(null);
-        edtData.setEnabled(false);
         edtHora = findViewById(R.id.edtHora);
         edtHora.setKeyListener(null);
-        edtHora.setEnabled(false);
         btnAgendar = findViewById(R.id.btnAgendar);
-        btnAgendar.setVisibility(View.GONE);
-
-        if(!expertMode){
-            consulta.setUsuario( Preferencia.getUsuario().getId() );
-            edtPaciente.setVisibility(View.GONE);
-            edtEspecialidade.setEnabled(true);
-        }
 
         edtPaciente.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,13 +87,31 @@ public class ConsultaActivity extends AppCompatActivity {
         btnAgendar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(ConsultaActivity.this, "kokokok", Toast.LENGTH_SHORT).show();
+                dao.getConsultaDAO().incluir(consulta, new Executar() {
+                    @Override
+                    public void sucesso(Object object) {
+                        Toast.makeText(ConsultaActivity.this, "Agendamento efetuado", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                        finish();
+                    }
+                });
             }
         });
+
+        if(expertMode){
+            edtPaciente.setVisibility(View.VISIBLE);
+            escondeEspecialidade(false);
+            buscarPacientes();
+        } else {
+            consulta.setUsuario( Preferencia.getUsuario().getId() );
+            edtPaciente.setVisibility(View.GONE);
+            escondeEspecialidade(true);
+            buscarEspecialidades();
+        }
     }
 
     private void buscarPacientes() {
-        dao.getUsuarioDAO().getUsuarioTipo(Preferencia.getUsuario().getTipo(),
+        dao.getUsuarioDAO().getUsuarioTipo("P",
                 new Executar() {
                     @Override
                     public void sucesso(Object object) {
@@ -113,11 +120,23 @@ public class ConsultaActivity extends AppCompatActivity {
                 });
     }
 
-    private void selecinarPaciente(List<Usuario> pacientes) {
+    private void selecinarPaciente(final List<Usuario> pacientes) {
         String nomes[] = new String[pacientes.size()];
         for (int i = 0; i < pacientes.size(); i++) {
             nomes[i] = pacientes.get(i).getNome();
         }
+        new Dialog(ConsultaActivity.this)
+                .selecionarOpcao("Paciente", nomes,
+                        new Dialog.Executar() {
+                            @Override
+                            public void selecionado(int i) {
+                                paciente = pacientes.get(i);
+                                edtPaciente.setText(paciente.getNome());
+                                consulta.setUsuario(paciente.getId());
+                                edtEspecialidade.setEnabled(true);
+                                buscarEspecialidades();
+                            }
+                        });
     }
 
     private void buscarHoras() {
@@ -152,20 +171,26 @@ public class ConsultaActivity extends AppCompatActivity {
         mTimePicker.show();
     }
 
-    private void selecionarHoras(List<String> horas, List<Consulta> consultas){
-        List<String> dele = new ArrayList<>();
-        for(Consulta c : consultas){
-            dele.add( Hora.formatar(c.getHora(), c.getMinuto()) );
+    private void selecionarHoras(final List<String> horas, List<Consulta> consultas){
+        if(consultas != null && !consultas.isEmpty()) {
+            List<String> dele = new ArrayList<>();
+            for (Consulta c : consultas) {
+                dele.add(Hora.formatar(c.getHora(), c.getMinuto()));
+            }
+            horas.removeAll(dele);
         }
-        horas.removeAll(dele);
+        final String[] hhoras = new String[horas.size()];
+        for (int i = 0; i < horas.size(); i++) {
+            hhoras[i] = horas.get(i);
+        }
         new Dialog(ConsultaActivity.this)
-                .selecionarOpcao("Hora", horas.toArray(),
+                .selecionarOpcao("Hora", hhoras,
                         new Dialog.Executar() {
                             @Override
                             public void selecionado(int i) {
                                 edtHora.setText(horas.get(i));
-                                consulta.setHora(Integer.getInteger(horas.get(i).split(":")[0]));
-                                consulta.setMinuto(Integer.getInteger(horas.get(i).split(":")[1]));
+                                consulta.setHora(Integer.valueOf(horas.get(i).split(":")[0]));
+                                consulta.setMinuto(Integer.valueOf(horas.get(i).split(":")[1]));
                                 btnAgendar.setVisibility(View.VISIBLE);
                             }
                         });
@@ -200,26 +225,26 @@ public class ConsultaActivity extends AppCompatActivity {
     }
 
     private void selecionarData(final List<Disponibilidade> disponibilidades) {
-        final String[] espec = new String[disponibilidades.size()];
-        for (int i = 0; i < disponibilidades.size(); i++) {
-            espec[i] = Data.dataFormatada(disponibilidades.get(i).getData());
+        if( disponibilidades != null && !disponibilidades.isEmpty()) {
+            final String[] espec = new String[disponibilidades.size()];
+            for (int i = 0; i < disponibilidades.size(); i++) {
+                espec[i] = Data.dataFormatada(disponibilidades.get(i).getData());
+            }
+            new Dialog(ConsultaActivity.this)
+                    .selecionarOpcao("Datas",
+                            espec, new Dialog.Executar() {
+                                @Override
+                                public void selecionado(int i) {
+                                    disponibilidade = disponibilidades.get(i);
+                                    edtData.setText(espec[i]);
+                                    consulta.setDisponibilidade(disponibilidade.getId());
+                                    escondeHora(true);
+                                    buscarHoras();
+                                }
+                            });
+        } else {
+            Toast.makeText(this, "Nenhuma data disponível", Toast.LENGTH_SHORT).show();
         }
-        new Dialog(ConsultaActivity.this)
-                .selecionarOpcao("Datas",
-                        espec, new Dialog.Executar() {
-                            @Override
-                            public void selecionado(int i) {
-                                disponibilidade = disponibilidades.get(i);
-                                edtData.setText(espec[i]);
-                                consulta.setDisponibilidade(disponibilidade.getId());
-                                edtHora.setText(null);
-                                edtHora.setEnabled(true);
-                                consulta.setHora(null);
-                                consulta.setMinuto(null);
-                                btnAgendar.setVisibility(View.GONE);
-                                buscarHoras();
-                            }
-                        });
     }
 
     private void buscarEspecialidades() {
@@ -243,16 +268,33 @@ public class ConsultaActivity extends AppCompatActivity {
                     public void selecionado(int i) {
                         especialidade = especialidades.get(i);
                         edtEspecialidade.setText(especialidade.getNome());
-                        edtData.setText(null);
-                        edtData.setEnabled(true);
-                        consulta.setDisponibilidade(null);
-                        edtHora.setText(null);
-                        edtHora.setEnabled(false);
-                        consulta.setHora(null);
-                        consulta.setMinuto(null);
-                        btnAgendar.setVisibility(View.GONE);
+                        escondeData(true);
                         buscarDatas();
                     }
                 });
+    }
+
+    private void escondeEspecialidade(boolean ok) {
+        edtEspecialidade.setText(null);
+        edtEspecialidade.setEnabled(ok);
+        consulta.setEspecialidade(null);
+        especialidade = null;
+        escondeData(false);
+    }
+
+    private void escondeData(boolean ok) {
+        edtData.setText(null);
+        edtData.setEnabled(ok);
+        consulta.setDisponibilidade(null);
+        disponibilidade = null;
+        escondeHora(false);
+    }
+
+    private void escondeHora(boolean ok){
+        edtHora.setText(null);
+        edtHora.setEnabled(ok);
+        consulta.setHora(null);
+        consulta.setMinuto(null);
+        btnAgendar.setVisibility(View.GONE);
     }
 }

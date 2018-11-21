@@ -11,6 +11,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -65,18 +66,15 @@ public class ConsultaListAdapter extends RecyclerView.Adapter<ConsultaListViewHo
 
     private void menu(final int pos) {
         vibrar();
-        final String[] itens;
-        if(list.get(pos).isConfirmado()) {
-             itens = new String[]{"Alterar", "Desmarcar"};
-        } else {
-            itens = new String[]{"Alterar", "Confirmar", "Desmarcar"};
+        if(!list.get(pos).isConfirmado()) {
+            final String[] itens = new String[]{"Alterar", "Confirmar", "Desmarcar"};
+            new Dialog(context).selecionarOpcao("Menu", itens, new Dialog.Executar() {
+                @Override
+                public void selecionado(int i) {
+                    executarMenu(itens[i], pos);
+                }
+            });
         }
-        new Dialog(context).selecionarOpcao("Menu", itens, new Dialog.Executar() {
-            @Override
-            public void selecionado(int i) {
-                executarMenu(itens[i], pos);
-            }
-        });
     }
 
     private void executarMenu(String item, int pos) {
@@ -95,6 +93,9 @@ public class ConsultaListAdapter extends RecyclerView.Adapter<ConsultaListViewHo
                 break;
             case "Desmarcar":
                 confirmaDesmarcar(consulta);
+                break;
+            case "Alterar":
+                Toast.makeText(context, "Funcionalidade não implementada", Toast.LENGTH_SHORT).show();
                 break;
         }
     }

@@ -24,10 +24,8 @@ public class DisponibilidadeDAO {
             @Override
             public void onResponse(Call<List<Disponibilidade>> call, Response<List<Disponibilidade>> response) {
                 if (response.isSuccessful()) {
-                    if (!response.body().isEmpty()) {
-                        if(executar != null){
-                            executar.sucesso(response.body());
-                        }
+                    if(executar != null){
+                        executar.sucesso(response.body());
                     }
                 }
             }
