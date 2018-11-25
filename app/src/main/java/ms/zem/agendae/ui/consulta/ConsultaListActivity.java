@@ -1,4 +1,4 @@
-package ms.zem.agendae.ui;
+package ms.zem.agendae.ui.consulta;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,7 +22,7 @@ import ms.zem.agendae.R;
 import ms.zem.agendae.dao.DAO;
 import ms.zem.agendae.dao.Executar;
 import ms.zem.agendae.modelo.Consulta;
-import ms.zem.agendae.ui.adapter.ConsultaListAdapter;
+import ms.zem.agendae.ui.consulta.adapter.ConsultaListAdapter;
 import ms.zem.agendae.util.Preferencia;
 
 public class ConsultaListActivity extends AppCompatActivity {

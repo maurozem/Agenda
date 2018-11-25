@@ -6,12 +6,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import ms.zem.agendae.R;
+import ms.zem.agendae.ui.consulta.ConsultaListActivity;
+import ms.zem.agendae.ui.login.LoginActivity;
 import ms.zem.agendae.util.Preferencia;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private static final long SPLASH_TIME_OUT = 2000;
-    private Preferencia preferencia;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,8 +28,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void testarLogin(){
-        preferencia = new Preferencia(getApplicationContext());
-        if (preferencia.usuarioLogado()){
+        if (getPreferencia().usuarioLogado()){
             startActivity(new Intent(MainActivity.this, ConsultaListActivity.class));
         } else {
             startActivity(new Intent(MainActivity.this, LoginActivity.class));

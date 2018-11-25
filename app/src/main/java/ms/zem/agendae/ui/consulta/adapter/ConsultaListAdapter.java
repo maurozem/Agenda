@@ -1,4 +1,4 @@
-package ms.zem.agendae.ui.adapter;
+package ms.zem.agendae.ui.consulta.adapter;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,8 +19,8 @@ import ms.zem.agendae.R;
 import ms.zem.agendae.dao.DAO;
 import ms.zem.agendae.dao.Executar;
 import ms.zem.agendae.modelo.Consulta;
-import ms.zem.agendae.ui.viewholder.ConsultaListViewHolder;
-import ms.zem.agendae.ui.viewholder.OnClick;
+import ms.zem.agendae.ui.consulta.viewholder.ConsultaListViewHolder;
+import ms.zem.agendae.ui.consulta.viewholder.OnClick;
 import ms.zem.agendae.util.Data;
 import ms.zem.agendae.util.Dialog;
 import ms.zem.agendae.util.Hora;

@@ -1,5 +1,6 @@
-package ms.zem.agendae.ui;
+package ms.zem.agendae.ui.login;
 
+import android.content.Context;
 import android.content.Intent;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -10,30 +11,29 @@ import android.view.View;
 
 import ms.zem.agendae.R;
 import ms.zem.agendae.dao.DAO;
-import ms.zem.agendae.dao.Executar;
-import ms.zem.agendae.modelo.Usuario;
-import ms.zem.agendae.util.Preferencia;
+import ms.zem.agendae.ui.BaseActivity;
+import ms.zem.agendae.ui.consulta.ConsultaListActivity;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity implements LoginContrato.View {
+
+    private LoginContrato.Presenter presenter;
 
     private final String TAG = "LoginActivity";
 
-    private TextInputLayout tilUsuario;
-    private TextInputLayout tilSenha;
-    private AppCompatEditText edtUsuario;
-    private AppCompatEditText edtSenha;
-    private AppCompatButton btnLogar;
-
-    private DAO dao;
-    private Preferencia preferencia;
+    TextInputLayout tilUsuario;
+    TextInputLayout tilSenha;
+    AppCompatEditText edtUsuario;
+    public AppCompatEditText edtSenha;
+    AppCompatButton btnLogar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        presenter = new LoginPresenter(this);
+
         setTitle("Logar na agenda");
-        dao = DAO.getInstance();
 
         edtUsuario = findViewById(R.id.edtUsuario);
         edtSenha = findViewById(R.id.edtSenha);
@@ -45,36 +45,27 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(validarCampos()) {
-                    logar();
+                    presenter.logar( edtUsuario.getText().toString(),
+                            edtSenha.getText().toString() );
                 }
             }
         });
     }
 
-    private void logar() {
-        dao.getUsuarioDAO().getUsuario(edtUsuario.getText().toString(),
-                new Executar() {
-                    @Override
-                    public void sucesso(Object object) {
-                        validarUsuario((Usuario) object);
-                    }
-                }
-        );
+    @Override
+    public Context getContext() {
+        return getApplicationContext();
     }
 
-    private void validarUsuario(Usuario usuario) {
-        if (edtSenha.getText().toString().equals(usuario.getSenha())){
-            cadastrarUsuario(usuario);
-        } else {
-            tilSenha.setErrorEnabled(true);
-            tilSenha.setError("Senha inválida");
-            edtSenha.requestFocus();
-        }
+    @Override
+    public void senhaInvalida() {
+        tilSenha.setErrorEnabled(true);
+        tilSenha.setError("Senha inválida");
+        edtSenha.requestFocus();
     }
 
-    private void cadastrarUsuario(Usuario usuario) {
-        preferencia = new Preferencia(getApplicationContext());
-        preferencia.setUsuario(usuario);
+    @Override
+    public void IniciaConsultaLista() {
         startActivity(new Intent(LoginActivity.this, ConsultaListActivity.class));
         finish();
     }

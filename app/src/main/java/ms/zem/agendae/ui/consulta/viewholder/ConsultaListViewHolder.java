@@ -1,4 +1,4 @@
-package ms.zem.agendae.ui.viewholder;
+package ms.zem.agendae.ui.consulta.viewholder;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;

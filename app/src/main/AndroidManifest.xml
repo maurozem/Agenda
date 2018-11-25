@@ -34,14 +34,14 @@
         </service>
 
         <activity
-            android:name=".ui.LoginActivity"
+            android:name=".ui.login.LoginActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ui.ConsultaListActivity"
+            android:name=".ui.consulta.ConsultaListActivity"
             android:label="@string/consultas"
             android:screenOrientation="portrait"
             android:theme="@style/NoActionBar" />
-        <activity android:name=".ui.ConsultaActivity"></activity>
+        <activity android:name=".ui.consulta.ConsultaActivity"></activity>
     </application>
 
 </manifest>

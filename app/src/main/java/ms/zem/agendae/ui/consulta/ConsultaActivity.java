@@ -1,53 +1,47 @@
-package ms.zem.agendae.ui;
+package ms.zem.agendae.ui.consulta;
 
 import android.app.TimePickerDialog;
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.AppCompatEditText;
 import android.view.View;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
 import ms.zem.agendae.R;
-import ms.zem.agendae.dao.DAO;
-import ms.zem.agendae.dao.Executar;
 import ms.zem.agendae.modelo.Consulta;
 import ms.zem.agendae.modelo.Disponibilidade;
 import ms.zem.agendae.modelo.Especialidade;
 import ms.zem.agendae.modelo.Usuario;
+import ms.zem.agendae.ui.BaseActivity;
 import ms.zem.agendae.util.Data;
 import ms.zem.agendae.util.Dialog;
 import ms.zem.agendae.util.Hora;
 import ms.zem.agendae.util.Preferencia;
 
-public class ConsultaActivity extends AppCompatActivity {
+public class ConsultaActivity extends BaseActivity implements ConsultaContrato.View{
+
+    private ConsultaContrato.Presenter presenter;
 
     private AppCompatEditText edtEspecialidade;
     private AppCompatEditText edtPaciente;
     private AppCompatEditText edtData;
     private AppCompatEditText edtHora;
     private AppCompatButton btnAgendar;
-    private DAO dao;
     private Consulta consulta;
     private Especialidade especialidade;
     private Disponibilidade disponibilidade;
     private Usuario paciente;
-
-    private boolean expertMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
 
-        expertMode = !Preferencia.getUsuario().getTipo().equals("P");
-        dao = DAO.getInstance();
+        presenter = new ConsultaPresenter(this);
         consulta = new Consulta();
 
         edtPaciente = findViewById(R.id.edtPaciente);
@@ -63,64 +57,55 @@ public class ConsultaActivity extends AppCompatActivity {
         edtPaciente.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                buscarPacientes();
+                presenter.buscarPacientes();
             }
         });
         edtEspecialidade.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                buscarEspecialidades();
+                presenter.buscarEspecialidades();
             }
         });
         edtData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                buscarDatas();
+                presenter.buscarDatas(especialidade);
             }
         });
         edtHora.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                buscarHoras();
+                presenter.buscarHoras(disponibilidade);
             }
         });
         btnAgendar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dao.getConsultaDAO().incluir(consulta, new Executar() {
-                    @Override
-                    public void sucesso(Object object) {
-                        Toast.makeText(ConsultaActivity.this, "Agendamento efetuado", Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
-                        finish();
-                    }
-                });
+                presenter.agendar(consulta);
+
             }
         });
 
-        if(expertMode){
+        if(presenter.getExpertMode()){
             edtPaciente.setVisibility(View.VISIBLE);
             escondeEspecialidade(false);
-            buscarPacientes();
+            presenter.buscarPacientes();
         } else {
             consulta.setUsuario( Preferencia.getUsuario().getId() );
             edtPaciente.setVisibility(View.GONE);
             escondeEspecialidade(true);
-            buscarEspecialidades();
+            presenter.buscarEspecialidades();
         }
     }
 
-    private void buscarPacientes() {
-        dao.getUsuarioDAO().getUsuarioTipo("P",
-                new Executar() {
-                    @Override
-                    public void sucesso(Object object) {
-                        selecinarPaciente((List<Usuario>) object);
-                    }
-                });
+    public void agendamentoEfetuado() {
+        toast("Agendamento efetuado");
+        setResult(RESULT_OK);
+        finish();
     }
 
-    private void selecinarPaciente(final List<Usuario> pacientes) {
+
+    public void selecinarPaciente(final List<Usuario> pacientes) {
         String nomes[] = new String[pacientes.size()];
         for (int i = 0; i < pacientes.size(); i++) {
             nomes[i] = pacientes.get(i).getNome();
@@ -134,26 +119,12 @@ public class ConsultaActivity extends AppCompatActivity {
                                 edtPaciente.setText(paciente.getNome());
                                 consulta.setUsuario(paciente.getId());
                                 edtEspecialidade.setEnabled(true);
-                                buscarEspecialidades();
+                                presenter.buscarEspecialidades();
                             }
                         });
     }
 
-    private void buscarHoras() {
-        if(expertMode){
-            picker();
-        } else {
-            dao.getConsultaDAO().getConsultas(disponibilidade.getId(),
-                    new Executar() {
-                        @Override
-                        public void sucesso(Object object) {
-                            selecionarHoras(calcHoras(), (List<Consulta>) object);
-                        }
-                    });
-        }
-    }
-
-    private void picker() {
+    public void picker() {
         Calendar mcurrentTime = Calendar.getInstance();
         int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
         int minute = mcurrentTime.get(Calendar.MINUTE);
@@ -161,7 +132,7 @@ public class ConsultaActivity extends AppCompatActivity {
         mTimePicker = new TimePickerDialog(ConsultaActivity.this, new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                edtHora.setText( selectedHour + ":" + selectedMinute);
+                edtHora.setText( "" + selectedHour + ":" + selectedMinute);
                 consulta.setHora( selectedHour );
                 consulta.setMinuto( selectedMinute );
                 btnAgendar.setVisibility(View.VISIBLE);
@@ -171,7 +142,7 @@ public class ConsultaActivity extends AppCompatActivity {
         mTimePicker.show();
     }
 
-    private void selecionarHoras(final List<String> horas, List<Consulta> consultas){
+    public void selecionarHoras(final List<String> horas, List<Consulta> consultas){
         if(consultas != null && !consultas.isEmpty()) {
             List<String> dele = new ArrayList<>();
             for (Consulta c : consultas) {
@@ -196,35 +167,7 @@ public class ConsultaActivity extends AppCompatActivity {
                         });
     }
 
-    private List<String> calcHoras() {
-        int[] periodo;
-        if (disponibilidade.getPeriodo().equals("M")) {
-            periodo = Consulta.MANHA;
-        } else if (disponibilidade.getPeriodo().equals("T")) {
-            periodo = Consulta.TARDE;
-        } else {
-            periodo = Consulta.NOITE;
-        }
-        List<String> horas = new ArrayList<>();
-        for (int i = 0; i < periodo.length; i++) {
-            for (int j = 0; j < Consulta.MINUTOS.length; j++) {
-                horas.add( Hora.formatar(periodo[i], Consulta.MINUTOS[j]) );
-            }
-        }
-        return horas;
-    }
-
-    private void buscarDatas() {
-        dao.getDisponibilidadeDAO().getDisponibilidade(especialidade.getId(),
-                new Executar() {
-                    @Override
-                    public void sucesso(Object object) {
-                        selecionarData((List<Disponibilidade>) object);
-                    }
-                });
-    }
-
-    private void selecionarData(final List<Disponibilidade> disponibilidades) {
+    public void selecionarData(final List<Disponibilidade> disponibilidades) {
         if( disponibilidades != null && !disponibilidades.isEmpty()) {
             final String[] espec = new String[disponibilidades.size()];
             for (int i = 0; i < disponibilidades.size(); i++) {
@@ -239,24 +182,15 @@ public class ConsultaActivity extends AppCompatActivity {
                                     edtData.setText(espec[i]);
                                     consulta.setDisponibilidade(disponibilidade.getId());
                                     escondeHora(true);
-                                    buscarHoras();
+                                    presenter.buscarHoras(disponibilidade);
                                 }
                             });
         } else {
-            Toast.makeText(this, "Nenhuma data disponível", Toast.LENGTH_SHORT).show();
+            toast("Nenhuma data disponível");
         }
     }
 
-    private void buscarEspecialidades() {
-        dao.getEspecialidadeDAO().getEspecialidade(new Executar() {
-            @Override
-            public void sucesso(Object object) {
-                selecionarEspecidade((List<Especialidade>) object);
-            }
-        });
-    }
-
-    private void selecionarEspecidade(final List<Especialidade> especialidades) {
+    public void selecionarEspecidade(final List<Especialidade> especialidades) {
         String[] espec = new String[especialidades.size()];
         for (int i = 0; i < especialidades.size(); i++) {
             espec[i] = especialidades.get(i).getNome();
@@ -264,14 +198,14 @@ public class ConsultaActivity extends AppCompatActivity {
         new Dialog(ConsultaActivity.this)
                 .selecionarOpcao("Especialidades",
                         espec, new Dialog.Executar() {
-                    @Override
-                    public void selecionado(int i) {
-                        especialidade = especialidades.get(i);
-                        edtEspecialidade.setText(especialidade.getNome());
-                        escondeData(true);
-                        buscarDatas();
-                    }
-                });
+                            @Override
+                            public void selecionado(int i) {
+                                especialidade = especialidades.get(i);
+                                edtEspecialidade.setText(especialidade.getNome());
+                                escondeData(true);
+                                presenter.buscarDatas(especialidade);
+                            }
+                        });
     }
 
     private void escondeEspecialidade(boolean ok) {
